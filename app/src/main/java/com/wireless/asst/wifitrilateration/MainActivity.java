@@ -25,6 +25,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
 import com.lemmingapex.trilateration.TrilaterationFunction;
 
+
 import com.google.gson.Gson;
 
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
@@ -173,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
                 ArrayList<Double>APCoords;
                 for(int x = 0; x<AccessPointLocations.size(); x++){
 
-                    if(key == AccessPointLocations.get(x).ssid){
+                    if(key == AccessPointLocations.get(x).bssid){
                         APCoords = AccessPointLocations.get(x).coords;
                     }
                 }
