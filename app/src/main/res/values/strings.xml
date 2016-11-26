@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">WifiTrilateration</string>
+    <string name="str_locate">Locate Device</string>
+    <string name="str_list_ap">See Access Points</string>
 </resources>

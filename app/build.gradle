@@ -11,6 +11,9 @@ android {
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+    repositories {
+        maven { url 'http://repo1.maven.org/maven2' }
+    }
     buildTypes {
         release {
             minifyEnabled false
@@ -28,6 +31,9 @@ dependencies {
     compile 'com.android.support:design:23.1.1'
     testCompile 'junit:junit:4.12'
     compile files('libs/gson-2.2.3.jar')
-    compile 'com.lemmingapex.trilateration:trilateration:1.0.1'
+//    compile files('libs/trilateration-1.0.1.jar')
+//    compile 'com.lemmingapex.trilateration:trilateration:1.0.1'
     compile 'com.google.android.gms:play-services-appindexing:8.4.0'
+    compile 'org.apache.commons:commons-math3:3.6.1'
+    compile 'com.android.support.test.espresso:espresso-core:2.2.1'
 }

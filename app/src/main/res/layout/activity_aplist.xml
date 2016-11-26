@@ -15,7 +15,7 @@
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="0.93"
+        android:layout_weight="1"
         android:id="@+id/view_aplist" />
 
     <Button

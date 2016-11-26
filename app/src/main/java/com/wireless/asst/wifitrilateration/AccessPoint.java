@@ -11,6 +11,7 @@ public class AccessPoint {
     String ssid;
     String bssid;
     ArrayList<Double> coords;
+    double distance = -1;
 
     public AccessPoint(String ssid, String bssid, ArrayList<Double> coords) {
         this.ssid = ssid;
@@ -20,6 +21,11 @@ public class AccessPoint {
 
     @Override
     public String toString() {
-        return ssid + "[" + bssid + "] - (" + TextUtils.join(", ", coords) + ")" ;
+        if(distance == -1) {
+            return ssid + "[" + bssid + "] - (" + TextUtils.join(", ", coords) + ")";
+        } else {
+            return ssid + "[" + bssid + "] - (" + TextUtils.join(", ", coords) + ")"
+                    + "\n" + distance;
+        }
     }
 }
