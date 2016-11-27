@@ -20,12 +20,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.internal.Streams;
 import com.google.gson.reflect.TypeToken;
 import com.wireless.asst.wifitrilateration.trilateration.NonLinearLeastSquaresSolver;
 import com.wireless.asst.wifitrilateration.trilateration.TrilaterationFunction;
 
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
+import org.apache.commons.math3.util.DoubleArray;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -49,7 +51,8 @@ public class MainActivity extends AppCompatActivity {
     ArrayAdapter<AccessPoint> usedAPsAdapter;
 
     HashMap<String, Double> APDistance = new HashMap<>();
-    ArrayList<AccessPoint> APLocations;
+    HashMap<String, Double> scannedAPs = new HashMap<>();
+    ArrayList<AccessPoint> apList;
     ArrayList<AccessPoint> usedAPs;
 
     @Override
@@ -61,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         _locationTextView = (TextView) findViewById(R.id.tv_location);
         _locateButton = (Button) findViewById(R.id.bt_locate);
         _listAPButton = (Button) findViewById(R.id.btn_listap);
-//        _scanButton = (Button) findViewById(R.id.btn_scan);
+        _scanButton = (Button) findViewById(R.id.btn_scan);
 
         _locateButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "MainActivity: Locate Button Clicked");
                 _locateButton.setEnabled(false);
                 APDistance.clear();
+                scannedAPs.clear();
                 progressDialog = new ProgressDialog(MainActivity.this,
                         R.style.AppTheme);
                 progressDialog.setIndeterminate(true);
@@ -88,12 +92,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        _scanButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                wifi.startScan();
-//            }
-//        });
+        _scanButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                wifi.startScan();
+            }
+        });
 
         wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         if (wifi.isWifiEnabled() == false) {
@@ -119,9 +123,9 @@ public class MainActivity extends AppCompatActivity {
         String aplist_str = prefs.getString("aplist", "");
         if(!aplist_str.equals("")) {
             Type responseType= new TypeToken<ArrayList<AccessPoint>>() { }.getType();
-            APLocations = gson.fromJson(aplist_str, responseType);
+            apList = gson.fromJson(aplist_str, responseType);
         } else {
-            APLocations = new ArrayList<>();
+            apList = new ArrayList<>();
             Toast.makeText(getApplicationContext(), "Configure AP Locations to be able to locate your device.", Toast.LENGTH_LONG).show();
         }
     }
@@ -139,28 +143,32 @@ public class MainActivity extends AppCompatActivity {
             return Math.pow(10.0, exp);
         }
 
-        public double[] getLocation(HashMap<String, Double> APDistance) {
+        public ArrayList<double[]> getLocation(HashMap<String, Double> scannedAPs,
+                                               HashMap<String, Double> APDistance) {
             //For testing default
 //            double[][] positions = new double[][]{{5.0, -6.0}, {13.0, -15.0}, {21.0, -3.0}, {12.4, -21.2}};
 //            double[] distances = new double[]{8.06, 13.97, 23.32, 15.31};
 
-            ArrayList<Double> distanceList = new ArrayList<>();
+            ArrayList<Double> distanceList1 = new ArrayList<>(), distanceList2 = new ArrayList<>();
             ArrayList<double[]> positionList = new ArrayList<>();
             usedAPs.clear();
             int aps_found = 0;
-            for(int k = 0; k < APLocations.size(); k++) {
-                Log.d(TAG, APLocations.get(k).toString());
-                AccessPoint ap = APLocations.get(k);
+            for(int k = 0; k < apList.size(); k++) {
+                Log.d(TAG, apList.get(k).toString());
+                AccessPoint ap = apList.get(k);
 
-                if(APDistance.containsKey(ap.bssid)) {
-                    Log.d(TAG, ap.bssid + " found with distance " + APDistance.get(ap.bssid));
-                    double[] pos = new double[ap.coords.size()];
-                    for(int i = 0; i < ap.coords.size(); i++) {
-                        pos[i] = ap.coords.get(i);
-                    }
-                    positionList.add(pos);
-                    distanceList.add(APDistance.get(ap.bssid));
-                    ap.distance = APDistance.get(ap.bssid);
+                if(scannedAPs.containsKey(ap.bssid)) {
+                    positionList.add(ap.coords);
+
+                    double distance1 = APDistance.get(ap.bssid);
+                    distanceList1.add(distance1);
+                    ap.distance1 = distance1;
+
+                    double rssi = scannedAPs.get(ap.bssid);
+                    double distance2 = Math.pow(10.0, (rssi + ap.A) / (-10.0 * ap.n));
+                    distanceList2.add(distance2);
+                    ap.distance2 = distance2;
+
                     usedAPs.add(ap);
                     aps_found++;
                 }
@@ -171,21 +179,27 @@ public class MainActivity extends AppCompatActivity {
             }
 
             double[][] positions = new double[aps_found][positionList.get(0).length];
-            double[] distances = new double[aps_found];
+            double[] distances1 = new double[aps_found], distances2 = new double[aps_found];
 
             for(int i = 0; i < aps_found; i++) {
                 positions[i] = positionList.get(i);
-                distances[i] = distanceList.get(i);
+                distances1[i] = distanceList1.get(i);
+                distances2[i] = distanceList2.get(i);
             }
 
-            NonLinearLeastSquaresSolver solver = new NonLinearLeastSquaresSolver(new TrilaterationFunction(positions, distances), new LevenbergMarquardtOptimizer());
+            NonLinearLeastSquaresSolver solver1 = new NonLinearLeastSquaresSolver(new TrilaterationFunction(positions, distances1), new LevenbergMarquardtOptimizer());
+            LeastSquaresOptimizer.Optimum optimum1 = solver1.solve();
+            double[] centroid1 = optimum1.getPoint().toArray();
 
-            LeastSquaresOptimizer.Optimum optimum = solver.solve();
+            NonLinearLeastSquaresSolver solver2 = new NonLinearLeastSquaresSolver(new TrilaterationFunction(positions, distances2), new LevenbergMarquardtOptimizer());
+            LeastSquaresOptimizer.Optimum optimum2 = solver2.solve();
+            double[] centroid2 = optimum2.getPoint().toArray();
 
-            //Answer
-            double[] centroid = optimum.getPoint().toArray();
-            Log.d(TAG, "Obtained Location" + Arrays.toString(centroid));
-            return centroid;
+//            Log.d(TAG, "Obtained Location" + Arrays.toString(centroid));
+            ArrayList<double[]> locations = new ArrayList<>();
+            locations.add(centroid1);
+            locations.add(centroid2);
+            return locations;
         }
 
         public void onReceive(Context c, Intent intent) {
@@ -195,22 +209,26 @@ public class MainActivity extends AppCompatActivity {
             double distance;
             for (ScanResult result : results) {
                 distance = calculateDistance(result.level, result.frequency);
-                if(result.SSID.equals("AndroidAP")) {
+                if(result.SSID.equals("Micromax") || result.SSID.equals("myAP")) {
                     Log.d(TAG, result.SSID + "[" + result.BSSID + "] : " + result.level + " : " + distance);
                 }
                 APDistance.put(result.BSSID, distance);
+                scannedAPs.put(result.BSSID, (double) result.level);
             }
 
+            ArrayList<double[]> locations = getLocation(scannedAPs, APDistance);
+            usedAPsAdapter.notifyDataSetChanged();
             if(scanRequested) {
-                double[] coords = getLocation(APDistance);
+
                 if (progressDialog != null) {
-                    usedAPsAdapter.notifyDataSetChanged();
                     _locateButton.setEnabled(true);
                     progressDialog.dismiss();
                     scanRequested = false;
                 }
-                if(coords != null) {
-                    _locationTextView.setText("Device Location: " + Arrays.toString(coords));
+                if(locations != null) {
+                    _locationTextView.setText("Device Location"
+                            + "\nMethod 1: " + Arrays.toString(locations.get(0))
+                            + "\nMehtod 2: " + Arrays.toString(locations.get(1)));
                 } else {
                     Toast.makeText(getApplicationContext(), "Could not locate device...not enough access points configured", Toast.LENGTH_LONG).show();
                 }

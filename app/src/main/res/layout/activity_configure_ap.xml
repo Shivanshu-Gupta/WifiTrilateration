@@ -81,13 +81,13 @@ android:fitsSystemWindows="true">
     </android.support.design.widget.TextInputLayout>
 
     <android.support.v7.widget.AppCompatButton
-        android:id="@+id/btn_configure"
+        android:id="@+id/btn_calibrate"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:layout_marginBottom="24dp"
         android:padding="12dp"
-        android:text="Configure AP"/>
+        android:text="Calibrate AP"/>
 
 </LinearLayout>
 </ScrollView>

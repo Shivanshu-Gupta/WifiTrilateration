@@ -69,9 +69,20 @@
             android:layout_height="wrap_content"
             android:background="?attr/colorPrimary"
             style="@style/Widget.AppCompat.Button.Colored"
+            android:textAppearance="@style/TextAppearance.AppCompat.Button"
+            android:layout_below="@+id/bt_locate"
+            android:layout_centerHorizontal="true" />
+
+        <Button
+            android:text="Scan"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_scan"
+            android:textAppearance="@style/TextAppearance.AppCompat.Button"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:background="?attr/colorPrimary"
             android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            android:textAppearance="@style/TextAppearance.AppCompat.Button" />
+            android:layout_centerHorizontal="true" />
     </RelativeLayout>
 
 </LinearLayout>

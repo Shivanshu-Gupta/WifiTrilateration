@@ -1,6 +1,7 @@
 package com.wireless.asst.wifitrilateration;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -20,8 +21,9 @@ import java.util.ArrayList;
 
 public class APConfigureActivity extends AppCompatActivity {
     public final static String TAG = "WifiTrilateration";
-    EditText _ssidText, _bssidText;
-    EditText _xText, _yText, _zText;
+    public final static String ACTION_CALIBRATE_AP = "com.wireless.asst.wifitrilateration.CALIBRATE_AP";
+    EditText _ssidEdit, _bssidEdit;
+    EditText _xEdit, _yEdit, _zEdit;
     Button _configureButton;
     int ap_index = -1;
     @Override
@@ -30,13 +32,13 @@ public class APConfigureActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_configure_ap);
 
-        _ssidText = (EditText) findViewById(R.id.input_ssid);
-        _bssidText = (EditText) findViewById(R.id.input_bssid);
-        _xText = (EditText) findViewById(R.id.input_X);
-        _yText = (EditText) findViewById(R.id.input_Y);
-        _zText = (EditText)findViewById(R.id.input_Z);
+        _ssidEdit = (EditText) findViewById(R.id.input_ssid);
+        _bssidEdit = (EditText) findViewById(R.id.input_bssid);
+        _xEdit = (EditText) findViewById(R.id.input_X);
+        _yEdit = (EditText) findViewById(R.id.input_Y);
+        _zEdit = (EditText)findViewById(R.id.input_Z);
         registerBSSIDChangedCallback();
-        if (getIntent().getAction().equals(APListActivity.ACTION_EDIT_AP)) {
+        if (getIntent().getAction().equals(APListActivity.ACTION_CONFIGURE_AP)) {
             Log.v(TAG, "Editing AP");
             ap_index = getIntent().getIntExtra("apindex", -1);
             Log.d(TAG, "AP index: " + ap_index);
@@ -50,26 +52,41 @@ public class APConfigureActivity extends AppCompatActivity {
                     ArrayList<AccessPoint> aplist = gson.fromJson(aplist_str, responseType);
                     AccessPoint ap = aplist.get(ap_index);
                     Log.d(TAG, "AP: " + ap.toString());
-                    _ssidText.setText(ap.ssid);
-                    _bssidText.setText(ap.bssid);
-                    _xText.setText(String.format("%f", ap.coords.get(0)));
-                    _yText.setText(String.format("%f", ap.coords.get(1)));
-                    _zText.setText(String.format("%f", ap.coords.get(2)));
+                    _ssidEdit.setText(ap.ssid);
+                    _bssidEdit.setText(ap.bssid);
+                    _xEdit.setText(String.format("%f", ap.coords[0]));
+                    _yEdit.setText(String.format("%f", ap.coords[1]));
+                    _zEdit.setText(String.format("%f", ap.coords[2]));
                 }
             }
         }
-        _configureButton = (Button) findViewById(R.id.btn_configure);
+        _configureButton = (Button) findViewById(R.id.btn_calibrate);
         _configureButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.d(TAG, "APConfigureActivity: Add new AP Button Clicked");
-                String ssid = _ssidText.getText().toString();
-                String bssid = _bssidText.getText().toString();
-                ArrayList<Double> coords = new ArrayList<>();
-                coords.add(Double.parseDouble(_xText.getText().toString()));
-                coords.add(Double.parseDouble(_yText.getText().toString()));
-                coords.add(Double.parseDouble(_zText.getText().toString()));
+                String ssid = _ssidEdit.getText().toString();
+                String bssid = _bssidEdit.getText().toString();
+                double[] coords = new double[3];
+                coords[0] = Double.parseDouble(_xEdit.getText().toString());
+                coords[1] = Double.parseDouble(_yEdit.getText().toString());
+                coords[2] = Double.parseDouble(_zEdit.getText().toString());
                 AccessPoint newAP = new AccessPoint(ssid, bssid, coords);
+                Log.v(TAG, "new AP: " + newAP.toString());
+
+                Intent intent = new Intent(v.getContext(), APCalibrateActivity.class);
+                intent.putExtra("ap", newAP);
+                startActivityForResult(intent, 0);
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == 0) {
+            if(resultCode == RESULT_OK) {
+                AccessPoint newAP = data.getParcelableExtra("ap");
 
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(APConfigureActivity.this);
                 String aplist_str = prefs.getString("aplist", "");
@@ -93,16 +110,15 @@ public class APConfigureActivity extends AppCompatActivity {
 
                 finish();
             }
-        });
+        }
     }
-
 
     /**
      * Registers TextWatcher for MAC EditText field. Automatically adds colons,
      * switches the MAC to upper case and handles the cursor position.
      */
     private void registerBSSIDChangedCallback() {
-        _bssidText.addTextChangedListener(new TextWatcher() {
+        _bssidEdit.addTextChangedListener(new TextWatcher() {
             String mPreviousMac = null;
 
             /* (non-Javadoc)
@@ -128,11 +144,11 @@ public class APConfigureActivity extends AppCompatActivity {
             @SuppressLint("DefaultLocale")
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String enteredMac = _bssidText.getText().toString().toLowerCase();
+                String enteredMac = _bssidEdit.getText().toString().toLowerCase();
                 String cleanMac = clearNonMacCharacters(enteredMac);
                 String formattedMac = formatMacAddress(cleanMac);
 
-                int selectionStart = _bssidText.getSelectionStart();
+                int selectionStart = _bssidEdit.getSelectionStart();
                 formattedMac = handleColonDeletion(enteredMac, formattedMac, selectionStart);
                 int lengthDiff = formattedMac.length() - enteredMac.length();
 
@@ -214,16 +230,16 @@ public class APConfigureActivity extends AppCompatActivity {
              * @param lengthDiff        Formatted/Entered MAC number of characters difference.
              */
             private void setMacEdit(String cleanMac, String formattedMac, int selectionStart, int lengthDiff) {
-                _bssidText.removeTextChangedListener(this);
+                _bssidEdit.removeTextChangedListener(this);
                 if (cleanMac.length() <= 12) {
-                    _bssidText.setText(formattedMac);
-                    _bssidText.setSelection(selectionStart + lengthDiff);
+                    _bssidEdit.setText(formattedMac);
+                    _bssidEdit.setSelection(selectionStart + lengthDiff);
                     mPreviousMac = formattedMac;
                 } else {
-                    _bssidText.setText(mPreviousMac);
-                    _bssidText.setSelection(mPreviousMac.length());
+                    _bssidEdit.setText(mPreviousMac);
+                    _bssidEdit.setSelection(mPreviousMac.length());
                 }
-                _bssidText.addTextChangedListener(this);
+                _bssidEdit.addTextChangedListener(this);
             }
         });
     }

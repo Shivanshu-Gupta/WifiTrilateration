@@ -25,7 +25,7 @@ import static android.R.layout.simple_list_item_1;
 public class APListActivity extends AppCompatActivity {
     public final static String TAG = "WifiTrilateration";
     public final static String ACTION_ADD_AP = "com.wireless.asst.wifitrilateration.ADD_AP";
-    public final static String ACTION_EDIT_AP = "com.wireless.asst.wifitrilateration.EDIT_AP";
+    public final static String ACTION_CONFIGURE_AP = "com.wireless.asst.wifitrilateration.EDIT_AP";
     SharedPreferences prefs;
     ArrayList<AccessPoint> aplist;
     ListView _aplistView;
@@ -74,11 +74,15 @@ public class APListActivity extends AppCompatActivity {
         String menuItemName = menuItems[menuItemIndex];
         if(menuItemName.equals("Edit")) {
             Intent intent = new Intent();
-            intent.setAction(ACTION_EDIT_AP);
+            intent.setAction(ACTION_CONFIGURE_AP);
             intent.putExtra("apindex", info.position);
             startActivity(intent);
         } else if(menuItemName.equals("Delete")) {
             aplist.remove(info.position);
+            SharedPreferences.Editor editor = prefs.edit();
+            Gson gson = new Gson();
+            editor.putString("aplist", gson.toJson(aplist));
+            editor.commit();
             adapter.notifyDataSetChanged();
         }
         return true;

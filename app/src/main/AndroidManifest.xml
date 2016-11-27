@@ -4,7 +4,7 @@
 
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -12,6 +12,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -19,7 +20,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity android:name=".APListActivity" />
+
         <activity android:name=".APConfigureActivity">
             <intent-filter>
                 <action android:name="com.wireless.asst.wifitrilateration.ADD_AP" />
@@ -27,6 +30,13 @@
             </intent-filter>
             <intent-filter>
                 <action android:name="com.wireless.asst.wifitrilateration.EDIT_AP" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".APCalibrateActivity">
+            <intent-filter>
+                <action android:name="com.wireless.asst.wifitrilateration.CALIBRATE_AP" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
