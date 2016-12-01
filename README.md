@@ -1,7 +1,7 @@
 # WifiTrilateration
-Wifi Radio Signal Strength (RSS) based Indoor Location Determination
+#### Wifi Radio Signal Strength (RSS) based Indoor Location Determination
 
-This is Android Application to determine one’s indoor location on a 2D plane, given RSSI measurements from two or more 
+This is Android Application to determine one’s indoor location coordinates, given RSSI measurements from two or more 
 access points whose location is already known accurately.
 
 ## Working
