@@ -19,8 +19,8 @@ access points whose location is already known accurately.
 ### RSSI to Distance
 The app uses two different methods to estimate the distance of the device from an Access Point.
 
-1. Using the Free Space Path Loss formula [src] (http://rvmiller.com/2013/05/part-1-wifi-based-trilateration-on-android/)
-2. Using Curve Fitting [src] (http://www.rn.inf.tu-dresden.de/dargie/papers/icwcuca.pdf)
+1. Using the Free Space Path Loss formula [src](http://rvmiller.com/2013/05/part-1-wifi-based-trilateration-on-android/)
+2. Using Curve Fitting [src](http://www.rn.inf.tu-dresden.de/dargie/papers/icwcuca.pdf)
 
 ### Trilateration
-The app uses [this] (https://github.com/lemmingapex/trilateration) trilateration solver for estimating location of the device given AP locations and distances from APs.
+The app uses [this](https://github.com/lemmingapex/trilateration) trilateration solver for estimating location of the device given AP locations and distances from APs.
